@@ -13,13 +13,18 @@ vector
     include: ['/var/log/apache2/*.log'],  // supports globbing
     ignore_older: 86400,  // 1 day
   }),
+  nginx: vector.sources.file({
+    description:: 'Ingest data by tailing one or more files',
+    include: ['/var/log/nginx/*.log'],  // supports globbing
+    ignore_older: 86400,  // 1 day
+  }),
 
   // Transforms parse, structure, and enrich events.
   apache_parser: vector.transforms.regex_parser({
     description:: 'Structure and parse the data',
     regex: '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$',
   }),
-  apache_sampler: vector.transforms.sampler({
+  sampler: vector.transforms.sampler({
     description:: 'Sample the data to save on cost',
     rate: 50,  // only keep 50%
   }),
@@ -44,7 +49,8 @@ vector
 })
 
 .pipelines([
-  ['apache_logs', 'apache_parser', 'apache_sampler', 'es_cluster'],
+  ['nginx', 'sampler', 'es_cluster'],
+  ['apache_logs', 'apache_parser', 'sampler', 'es_cluster'],
   ['apache_logs', 'apache_parser', 's3_archives'],
 ])
 

@@ -42,22 +42,23 @@
               function(pipeline, config)
                 std.foldr(
                   function(i, config)
+                    assert pipeline[i] in config.index : "component '%s' not defined" % pipeline[i];
+                    assert pipeline[i - 1] in config.index : "component '%s' not defined" % pipeline[i - 1];
                     local component = pipeline[i];
                     local input = pipeline[i - 1];
-
-                    assert component in config.index : "component '%s' not defined" % component;
-                    assert input in config.index : "component '%s' not defined" % input;
-
                     local kind = config.index[component];
 
                     config {
                       [kind]+: {
                         [component]+: {
-                          inputs: [input],
+                          [
+                          if !('inputs' in config[kind][component]) || std.length(std.find(input, config[kind][component].inputs)) == 0
+                          then 'inputs'
+                          ]+: [input],
                         },
                       },
                     },
-                  std.range(1, std.length(pipeline) - 1),
+                  if std.length(pipeline) > 0 then std.range(1, std.length(pipeline) - 1) else [],
                   config
                 ),
               o,
