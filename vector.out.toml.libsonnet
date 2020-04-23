@@ -7,9 +7,9 @@
     (if self.config_.enable_intro then self.assets.intro else '') +
     (if self.config_.enable_headers then self.assets.global else '') +
 
-    // General options are generated throught this block. The .log_schema object will 
+    // General options are generated throught this block. The .log_schema object will
     // not be manage in this library because of its singularity; all TOML parse used
-    // generate an error on this element. 
+    // generate an error on this element.
     (
       std.foldl(
         function(toml, opt)
@@ -23,7 +23,7 @@
         ''
       ) + '\n'
     ) +
-    // All others components (sources, transforms and sinks) are generated in this block, 
+    // All others components (sources, transforms and sinks) are generated in this block,
     // following the given order.
     (
       std.foldl(
@@ -137,7 +137,7 @@
               if std.isObject(body[field]) then fmt.table(keys + [field], body[field], indent + 1)
               else if std.isArray(body[field]) then fmt.array(keys + [field], body[field], indent + 1)
               else fmt.kvpair(field, body[field], indent + 1),
-            // the sort here is used to separate all 'k/v' pair with object arrays, which must be 
+            // the sort here is used to separate all 'k/v' pair with object arrays, which must be
             // generated after all pairs (https://github.com/toml-lang/toml#array-of-tables).
             std.sort(
               std.objectFields(body),

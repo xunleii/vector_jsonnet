@@ -1,7 +1,7 @@
 {
   // Sinks batch or stream data out of Vector.
   sinks:: {
-    fn(type, o):: {kind:: 'sinks', type: type} + o,
+    fn(type, o):: { kind:: 'sinks', type: type } + o,
     
     // Batches `log` events to Amazon Web Service's CloudWatch Logs service via the `PutLogEvents` API endpoint.
     aws_cloudwatch_logs(o={}):: self.fn('aws_cloudwatch_logs', o),

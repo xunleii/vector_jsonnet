@@ -1,7 +1,7 @@
 {
   // Sources specify data sources and are responsible for ingesting data into
   sources:: {
-    fn(type, o):: {kind:: 'sources', type: type} + o,
+    fn(type, o):: { kind:: 'sources', type: type } + o,
     
     // Ingests data through the Docker engine daemon and outputs `log` events.
     docker(o={}):: self.fn('docker', o),
