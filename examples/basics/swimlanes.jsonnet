@@ -1,4 +1,4 @@
-local vector = (import '../vector.libsonnet').vector;
+local vector = (import '../../vector.libsonnet').vector;
 
 vector
 .global({ data_dir: '/var/lib/vector' })
@@ -8,17 +8,19 @@ vector
     include: ['/var/log/apache2/*.log'],  // supports globbing
     ignore_older: 86400,  // 1 day
   }),
-  nginx: vector.sources.file({
-    include: ['/var/log/nginx/*.log'],  // supports globbing
-    ignore_older: 86400,  // 1 day
-  }),
 
   // Transforms parse, structure, and enrich events.
   apache_parser: vector.transforms.regex_parser({
     regex: '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$',
   }),
-  sampler: vector.transforms.sampler({
-    rate: 50,  // only keep 50%
+  sampler: vector.transforms.sampler({ rate: 50 }),
+  apache_status: vector.transforms.swimlanes({
+    lanes: {
+      '2xx': { 'status.regex': '2..' },
+      '3xx': { 'status.regex': '3..' },
+      '4xx': { 'status.regex': '4..' },
+      '5xx': { 'status.regex': '5..' },
+    },
   }),
 
   // Sinks batch or stream data out of Vector.
@@ -38,8 +40,12 @@ vector
   }),
 })
 .pipelines([
-  ['nginx', 'sampler', 'es_cluster'],
-  ['apache_logs', 'apache_parser', 'sampler', 'es_cluster'],
-  ['apache_logs', 'apache_parser', 's3_archives'],
+  ['apache_logs', 'apache_parser', 'apache_status.2xx', 'sampler', 'es_cluster'],
+  ['apache_logs', 'apache_parser', 'apache_status.3xx', 'sampler', 'es_cluster'],
+  ['apache_logs', 'apache_parser', 'apache_status.4xx', 'es_cluster'],
+  ['apache_logs', 'apache_parser', 'apache_status.5xx', 'es_cluster'],
+
+  ['apache_logs', 'apache_parser', 'apache_status.2xx', 's3_archives'],
+  ['apache_logs', 'apache_parser', 'apache_status.4xx', 's3_archives'],
 ])
 .json

@@ -1,0 +1,121 @@
+#                                    __   __  __
+#                                    \ \ / / / /
+#                                     \ V / / /
+#                                      \_/  \/
+#
+#                                    V E C T O R
+#                             Configuration Definition
+#
+# ------------------------------------------------------------------------------
+# Website: https://vector.dev
+# Docs: https://vector.dev/docs/
+# Community: https://vector.dev/community/
+# ------------------------------------------------------------------------------
+# More info on Vector's configuration can be found at:
+# /docs/setup/configuration/
+
+# ------------------------------------------------------------------------------
+# Global
+# ------------------------------------------------------------------------------
+# Global options are relevant to Vector as a whole and apply to global behavior.
+
+data_dir = "/var/lib/vector"
+
+
+
+# ------------------------------------------------------------------------------
+# Sources
+# ------------------------------------------------------------------------------
+# Sources specify data sources and are responsible for ingesting data into
+# Vector.
+
+# ------------------------------------------------------------------------------
+# Ingest data by tailing one or more files
+[sources.apache_logs]
+  ignore_older = 86400
+  include = ["/var/log/apache2/*.log"]
+  type = "file"
+
+
+
+# ------------------------------------------------------------------------------
+# Transforms
+# ------------------------------------------------------------------------------
+# Transforms parse, structure, and enrich events.
+
+# ------------------------------------------------------------------------------
+# Structure and parse the data
+[transforms.apache_parser]
+  inputs = ["apache_logs"]
+  regex = "^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] \"(?P<method>[w]+) (?P<path>.*)\" (?P<status>[d]+) (?P<bytes_out>[d]+)$"
+  type = "regex_parser"
+
+# ------------------------------------------------------------------------------
+[transforms.apache_sampler]
+  inputs = ["apache_parser"]
+  rate = 50
+  type = "sampler"
+
+# ------------------------------------------------------------------------------
+# Extract somes metrics from the parsed logs
+[transforms.log_to_metric]
+  inputs = ["apache_parser"]
+  type = "log_to_metric"
+  [[transforms.log_to_metric.metrics]]
+    field = "message"
+    type = "counter"
+  [[transforms.log_to_metric.metrics]]
+    field = "bytes_out"
+    increment_by_value = true
+    name = "bytes_out_total"
+    type = "counter"
+  [[transforms.log_to_metric.metrics]]
+    field = "bytes_out"
+    type = "gauge"
+  [[transforms.log_to_metric.metrics]]
+    field = "user"
+    type = "set"
+  [[transforms.log_to_metric.metrics]]
+    field = "bytes_out"
+    name = "bytes_out_histogram"
+    type = "histogram"
+
+
+
+# ------------------------------------------------------------------------------
+# Sinks
+# ------------------------------------------------------------------------------
+# Sinks batch or stream data out of Vector.
+
+# ------------------------------------------------------------------------------
+# Send structured data to a short-term storage
+[sinks.es_cluster]
+  host = "http://79.12.221.222:9200"
+  index = "vector-%Y-%m-%d"
+  inputs = ["apache_sampler"]
+  type = "elasticsearch"
+
+# ------------------------------------------------------------------------------
+# Send metrics to Prometheus
+[sinks.prometheus]
+  buckets = [0, 10, 100, 1000, 10000, 100001]
+  inputs = ["log_to_metric"]
+  namespace = "vector"
+  type = "prometheus"
+
+# ------------------------------------------------------------------------------
+# Send structured data to a cost-effective long-term storage.
+# 
+# AWS S3 is a good choice for this purpose.
+[sinks.s3_archives]
+  [sinks.s3_archives.batch]
+    max_size = 10000000
+  bucket = "my-log-archives"
+  compression = "gzip"
+  encoding = "ndjson"
+  inputs = ["apache_parser"]
+  key_prefix = "date=%Y-%m-%d"
+  region = "us-east-1"
+  type = "aws_s3"
+
+

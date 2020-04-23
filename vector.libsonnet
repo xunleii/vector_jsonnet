@@ -1,15 +1,16 @@
 {
   vector::
+    (import 'vector.out.toml.libsonnet') +
     (import 'vector.sources.libsonnet') +
-    (import 'vector.transforms.libsonnet') +
     (import 'vector.sinks.libsonnet') +
+    (import 'vector.transforms.libsonnet') +
     {
       config_+:: { index+: {}, sinks+: {}, sources+: {}, transforms+: {} },
       // Global options are relevant to Vector as a whole and apply to global behavior. Theses options also
       // configure the JSONNET generation behaviour.
       global(o)::
         self +
-        { config_: { enable_headers:: false, enable_descriptions:: false } } +
+        { config_+: { enable_intro:: false, enable_headers:: false, enable_descriptions:: false } } +
         { config_+: o },
 
       // Components allow you to collect, transform, and route data with ease.
@@ -17,8 +18,8 @@
         self +
         {
           config_+:
-            std.foldr(
-              function(component, config)
+            std.foldl(
+              function(config, component)
                 assert 'kind' in o[component] : 'vector.sources, vector.transforms or vector.sinks must be used to generate component';
                 assert 'type' in o[component] : 'vector.sources, vector.transforms or vector.sinks must be used to generate component';
 
@@ -47,13 +48,13 @@
         self +
         {
           config_+:
-            std.foldr(
-              function(pipeline, config)
+            std.foldl(
+              function(config, pipeline)
                 if std.length(pipeline) == 0 then config
                 else
                   assert pipeline[0] in config.index : "component '%s' not defined" % pipeline[0];
-                  std.foldr(
-                    function(i, config)
+                  std.foldl(
+                    function(config, i)
                       assert pipeline[i] in config.index : "component '%s' not defined" % pipeline[i];
                       local component = std.split(pipeline[i], '.')[0];
                       local input = pipeline[i - 1];
@@ -82,6 +83,5 @@
 
 
       json:: self.config_,
-      // toml:: {},
     },
 }

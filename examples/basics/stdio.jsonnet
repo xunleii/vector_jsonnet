@@ -1,4 +1,4 @@
-local vector = (import '../vector.libsonnet').vector;
+local vector = (import '../../vector.libsonnet').vector;
 
 vector
 .components({

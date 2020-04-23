@@ -1,4 +1,4 @@
-local vector = (import '../vector.libsonnet').vector;
+local vector = (import '../../vector.libsonnet').vector;
 
 vector
 .global({ data_dir: '/var/lib/vector' })
