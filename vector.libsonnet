@@ -5,13 +5,14 @@
     (import 'vector.sinks.libsonnet') +
     (import 'vector.transforms.libsonnet') +
     {
-      config_+:: { index+: {}, sinks+: {}, sources+: {}, transforms+: {} },
+      config_+:: { 
+        enable_intro:: false, enable_headers:: false, enable_descriptions:: false,
+        index+: {}, sinks+: {}, sources+: {}, transforms+: {} 
+      },
       // Global options are relevant to Vector as a whole and apply to global behavior. Theses options also
       // configure the JSONNET generation behaviour.
       global(o)::
-        self +
-        { config_+: { enable_intro:: false, enable_headers:: false, enable_descriptions:: false } } +
-        { config_+: o },
+        self +        { config_+: o },
 
       // Components allow you to collect, transform, and route data with ease.
       components(o)::
@@ -38,7 +39,9 @@
                     else { [component]: o[component].kind },
 
                   [o[component].kind]+: {
-                    [component]: o[component],
+                    [component]:
+                      (if o[component].kind == 'sources' then {} else { inputs+: [] }) +
+                      o[component],
                   },
                 },
               std.objectFields(o),
@@ -49,7 +52,7 @@
       // Pipelines allow you describe the data workflow with ease. The data workflow is the list
       // of successive components in which your data are collected, transformed and routed to the
       // final destination.
-      pipelines(o)::
+      pipelines(pipelines)::
         self +
         {
           config_+:
@@ -73,7 +76,7 @@
                           [component]+: {
                             [
                             // avoid duplication on the inputs field
-                            if 'inputs' in config[kind][component] && std.length(std.find(input, config[kind][component].inputs)) > 0 then null
+                            if std.length(std.find(input, config[kind][component].inputs)) > 0 then null
                             else 'inputs'
                             ]+: [input],
                           },
@@ -82,7 +85,11 @@
                     std.range(1, std.length(pipeline) - 1),
                     config
                   ),
-              o,
+              [
+                pipeline
+                for pipeline in pipelines
+                if pipeline != null
+              ],
               super.config_
             ),
         },

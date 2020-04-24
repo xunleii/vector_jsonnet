@@ -1,6 +1,17 @@
 {
   local fmt = $._.fmt,
 
+  // TOML generation has its own configuration, allowing it to enable or
+  // disable some features.
+  config_+:: {
+    toml:: {
+      // When multiline is disabled, all multiline strings are displayed into
+      // an inline string with \n to separate lines.
+      // This feature is disabled by defaut because of its heavy implementation.
+      enable_multilines: false,
+    },
+  },
+
   // Toml generates the vector TOML configuration based on the given components and
   // pipelines.
   toml::
@@ -122,8 +133,26 @@
   _:: {
     fmt: {
       key(k): if std.length(std.findSubstr('.', k)) > 0 then std.escapeStringJson(k) else k,
-      value(v): if std.isString(v) then std.escapeStringJson(v) else '' + v,
-      kvpair(k, v, indent=0): std.repeat($.assets.tab, indent) + fmt.key(k) + ' = ' + fmt.value(v) + '\n',
+      value(v, indent=0):
+        if std.isString(v) then
+          if !($.config_.toml.enable_multilines) then std.escapeStringJson(v)
+          else
+            local lines = std.split(v, '\n');
+
+            if std.length(lines) == 0 then ''
+            else if std.length(lines) == 1 then std.escapeStringJson(lines[0])
+            else
+              '"""' +
+              std.foldl(
+                function(toml, line)
+                  toml +
+                  std.repeat($.assets.tab, indent) +
+                  std.stripChars(std.escapeStringJson(line), '"') + '\n',
+                lines,
+                '\n'
+              ) + std.repeat($.assets.tab, indent) + '"""'
+        else '' + v,
+      kvpair(k, v, indent=0): std.repeat($.assets.tab, indent) + fmt.key(k) + ' = ' + fmt.value(v, indent) + '\n',
       table(keys, body, indent=0):
         fmt.table_.head(keys, indent) +
         fmt.table_.body(keys, body, indent),
@@ -137,11 +166,14 @@
               if std.isObject(body[field]) then fmt.table(keys + [field], body[field], indent + 1)
               else if std.isArray(body[field]) then fmt.array(keys + [field], body[field], indent + 1)
               else fmt.kvpair(field, body[field], indent + 1),
-            // the sort here is used to separate all 'k/v' pair with object arrays, which must be
-            // generated after all pairs (https://github.com/toml-lang/toml#array-of-tables).
+            // the sort here is used to separate all 'k/v' pair with objects and object arrays,
+            // which must be generated after all pairs (https://github.com/toml-lang/toml#array-of-tables).
             std.sort(
               std.objectFields(body),
-              function(x) if std.isArray(body[x]) && std.length(body[x]) > 0 && std.isObject(body[x][0]) then 1 else 0
+              function(x)
+                if std.isArray(body[x]) && std.length(body[x]) > 0 && std.isObject(body[x][0]) then 2
+                else if std.isObject(body[x]) then 1
+                else 0
             ),
             ''
           ),

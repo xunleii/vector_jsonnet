@@ -29,6 +29,23 @@ vector
   apache_sampler: vector.transforms.sampler({
     rate: 50,  // only keep 50%
   }),
+  apache_lua: vector.transforms.lua({
+    description:: 'This is only for multiline string purpose... This component do nothing',
+
+    version: '2',
+    hooks: {
+      process: |||
+        function (event, emit)
+          -- event.log.field = "value" -- set value of a field
+          -- event.log.another_field = nil -- remove field
+          -- event.log.first, event.log.second = nil, event.log.first -- rename field
+
+          -- Very important! Emit the processed event.
+          emit(event)
+        end
+      |||,
+    },
+  }),
 
 
   es_cluster: vector.sinks.elasticsearch({
