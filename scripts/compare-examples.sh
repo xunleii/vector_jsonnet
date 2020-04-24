@@ -30,17 +30,3 @@ JSON_B="$(mktemp)"
 jsonnet "${JSONNET_FILE}" | jq '.' > "${JSON_B}"
 
 ${DIFFTOOLS} -u "${JSON_A}" "${JSON_B}"
-
-# # download config/vector.spec.toml from Github
-# VECTOR_SPEC="$(mktemp)"
-# curl -s https://raw.githubusercontent.com/timberio/vector/master/config/vector.spec.toml > ${VECTOR_SPEC}
-
-# cat << EOF > "vector.$1.libsonnet"
-# {
-#   $(cat ${VECTOR_SPEC} | grep -i "# $1 " | sed 's|#|//|')
-#   $1:: {
-#     fn(type, o):: {kind:: '$1', type: type} + o,
-#     $(cat ${VECTOR_SPEC} | grep --no-group-separator -B1 -P "^\[$1." | sed "s/\[$1.\(.*\)\]/    \1(o):: self.fn('\1', o),/" | sed "s|#|\n    //|")
-#   },
-# }
-# EOF

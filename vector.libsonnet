@@ -24,7 +24,10 @@
                 assert 'type' in o[component] : 'vector.sources, vector.transforms or vector.sinks must be used to generate component';
 
                 config {
+                  // index maps all components with the 'kind' (sources, sinks, ...). This map is used during pipeline generation
+                  // in order to find the right objet in the right kind and update its 'inputs' field.
                   index+::
+                    // transforms.swimlanes are maneged differently because we need to index the lanes and not the component.
                     if o[component].type == 'swimlanes'
                     then
                       assert 'lanes' in o[component] : "lanes must be defined in swimlanes component '%s'" % component;
@@ -43,7 +46,9 @@
             ),
         },
 
-
+      // Pipelines allow you describe the data workflow with ease. The data workflow is the list
+      // of successive components in which your data are collected, transformed and routed to the
+      // final destination.
       pipelines(o)::
         self +
         {
@@ -67,6 +72,7 @@
                         [kind]+: {
                           [component]+: {
                             [
+                            // avoid duplication on the inputs field
                             if 'inputs' in config[kind][component] && std.length(std.find(input, config[kind][component].inputs)) > 0 then null
                             else 'inputs'
                             ]+: [input],
@@ -82,6 +88,6 @@
         },
 
 
-      json:: self.config_,
+      json:: std.prune(self.config_),
     },
 }

@@ -1,4 +1,8 @@
-# Set global options
+# Swimlane transform example
+# ------------------------------------------------------------------------------
+# A simple example that demonstrates the Vector's swimlane mechanism
+# with the Jsonnet Library.
+
 data_dir = "/var/lib/vector"
 
 # Ingest data by tailing one or more files
@@ -32,20 +36,20 @@ data_dir = "/var/lib/vector"
 
 # Sample the data to save on cost (only 2xx and 3xx)
 [transforms.sampler]
-  inputs       = ["apache_status.3xx", "apache_status.2xx"]
+  inputs       = ["apache_status.2xx", "apache_status.3xx"]
   type         = "sampler"
   rate         = 50                            # only keep 50%
 
 # Send structured data to a short-term storage
 [sinks.es_cluster]
-  inputs       = ["apache_status.5xx", "apache_status.4xx", "sampler"] # only take sampled data or with error status
+  inputs       = ["sampler", "apache_status.4xx", "apache_status.5xx"] # take only sampled data or with error status
   type         = "elasticsearch"
   host         = "http://79.12.221.222:9200"   # local or external host
   index        = "vector-%Y-%m-%d"             # daily indices
 
 # Send structured data to a cost-effective long-term storage
 [sinks.s3_archives]
-  inputs       = ["apache_status.4xx", "apache_status.2xx"] # don't sample for S3 and don't archive 3xx or 5xx
+  inputs       = ["apache_status.2xx", "apache_status.4xx"] # don't archive sampled data, 3xx and 5xx hits
   type         = "aws_s3"
   region       = "us-east-1"
   bucket       = "my-log-archives"

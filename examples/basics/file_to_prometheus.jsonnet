@@ -1,5 +1,8 @@
 local vector = (import '../../vector.libsonnet').vector;
 
+// Prometheus sink example
+// ------------------------------------------------------------------------------
+// Parsing logs as metrics and exposing into Prometheus
 vector
 .global({ data_dir: '/var/lib/vector' })
 .components({
@@ -13,6 +16,7 @@ vector
   regex_parser: vector.transforms.regex_parser({
     regex: @'^(?P<host>[\w\.]+) - (?P<user>[\w-]+) \[(?P<timestamp>.*)\] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$',
   }),
+
   // Transform into metrics
   log_to_metric: vector.transforms.log_to_metric({
     metrics: [
@@ -34,7 +38,7 @@ vector
 })
 .pipelines([
   ['file', 'regex_parser', 'log_to_metric', 'console_metrics'],
-  ['file', 'regex_parser', 'console_logs'],
   ['file', 'regex_parser', 'log_to_metric', 'prometheus'],
+  ['file', 'regex_parser', 'console_logs'],
 ])
 .json

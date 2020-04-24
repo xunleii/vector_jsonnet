@@ -1,19 +1,24 @@
 local vector = (import '../../vector.libsonnet').vector;
 
+// Swimlane transform example
+// ------------------------------------------------------------------------------
+// A simple example that demonstrates the Vector's swimlane mechanism
+// with the Jsonnet Library.
 vector
 .global({ data_dir: '/var/lib/vector' })
 .components({
-  // Sources specify data sources and are responsible for ingesting data into Vector.
+  // Ingest data by tailing one or more files
   apache_logs: vector.sources.file({
     include: ['/var/log/apache2/*.log'],  // supports globbing
     ignore_older: 86400,  // 1 day
   }),
 
-  // Transforms parse, structure, and enrich events.
+  // Structure and parse the data
   apache_parser: vector.transforms.regex_parser({
     regex: '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$',
   }),
-  sampler: vector.transforms.sampler({ rate: 50 }),
+
+  // Create one swimlane for each HTTP Status group
   apache_status: vector.transforms.swimlanes({
     lanes: {
       '2xx': { 'status.regex': '2..' },
@@ -23,11 +28,16 @@ vector
     },
   }),
 
-  // Sinks batch or stream data out of Vector.
+  // Sample the data to save on cost (only 2xx and 3xx)
+  sampler: vector.transforms.sampler({ rate: 50 }),
+
+  // Send structured data to a short-term storage
   es_cluster: vector.sinks.elasticsearch({
     host: 'http://79.12.221.222:9200',  // local or external host
     index: 'vector-%Y-%m-%d',  // daily indices
   }),
+
+  // Send structured data to a cost-effective long-term storage
   s3_archives: vector.sinks.aws_s3({
     region: 'us-east-1',
     bucket: 'my-log-archives',
