@@ -5,20 +5,17 @@
     (import 'vector.sinks.libsonnet') +
     (import 'vector.transforms.libsonnet') +
     {
-      config_+:: { 
-        enable_intro:: false, enable_headers:: false, enable_descriptions:: false,
-        index+: {}, sinks+: {}, sources+: {}, transforms+: {} 
-      },
+      object+:: { index+:: {}, sinks+: {}, sources+: {}, transforms+: {} },
       // Global options are relevant to Vector as a whole and apply to global behavior. Theses options also
       // configure the JSONNET generation behaviour.
       global(o)::
-        self +        { config_+: o },
+        self + { object+: o },
 
       // Components allow you to collect, transform, and route data with ease.
       components(o)::
         self +
         {
-          config_+:
+          object+:
             std.foldl(
               function(config, component)
                 assert 'kind' in o[component] : 'vector.sources, vector.transforms or vector.sinks must be used to generate component';
@@ -45,17 +42,15 @@
                   },
                 },
               std.objectFields(o),
-              super.config_
+              super.object
             ),
         },
 
-      // Pipelines allow you describe the data workflow with ease. The data workflow is the list
-      // of successive components in which your data are collected, transformed and routed to the
-      // final destination.
+      // A "pipeline" is the end result of connecting sources, transforms, and sinks.
       pipelines(pipelines)::
         self +
         {
-          config_+:
+          object+:
             std.foldl(
               function(config, pipeline)
                 if std.length(pipeline) == 0 then config
@@ -90,11 +85,10 @@
                 for pipeline in pipelines
                 if pipeline != null
               ],
-              super.config_
+              super.object
             ),
         },
 
-
-      json:: std.prune(self.config_),
+      json:: std.prune(self.object),
     },
 }

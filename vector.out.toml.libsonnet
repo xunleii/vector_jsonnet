@@ -3,8 +3,17 @@
 
   // TOML generation has its own configuration, allowing it to enable or
   // disable some features.
-  config_+:: {
-    toml:: {
+  object+:: {
+    toml+:: {
+      // Enable file header on TOML output
+      enable_intro:: false,
+
+      // Enable section separator on TOML output
+      enable_headers:: false,
+
+      // Enable component comments (description field) on TOML output
+      enable_descriptions:: false,
+
       // When multiline is disabled, all multiline strings are displayed into
       // an inline string with \n to separate lines.
       // This feature is disabled by defaut because of its heavy implementation.
@@ -15,8 +24,8 @@
   // Toml generates the vector TOML configuration based on the given components and
   // pipelines.
   toml::
-    (if self.config_.enable_intro then self.assets.intro else '') +
-    (if self.config_.enable_headers then self.assets.global else '') +
+    (if self.object.toml.enable_intro then self.assets.intro else '') +
+    (if self.object.toml.enable_headers then self.assets.global else '') +
 
     // General options are generated throught this block. The .log_schema object will
     // not be manage in this library because of its singularity; all TOML parse used
@@ -25,11 +34,11 @@
       std.foldl(
         function(toml, opt)
           toml +
-          fmt.kvpair(opt, self.config_[opt]),
+          fmt.kvpair(opt, self.object[opt]),
         [
           opt
-          for opt in std.objectFields(self.config_)
-          if !std.isObject(self.config_[opt])
+          for opt in std.objectFields(self.object)
+          if !std.isObject(self.object[opt])
         ],
         ''
       ) + '\n'
@@ -40,15 +49,15 @@
       std.foldl(
         function(toml, kind)
           toml +
-          (if self.config_.enable_headers then self.assets.divider + self.assets[kind] else '') +
+          (if self.object.toml.enable_headers then self.assets.divider + self.assets[kind] else '') +
           (
             std.foldl(
               function(toml, component)
-                local obj = { description:: '' } + self.config_[kind][component];
+                local obj = { description:: '' } + self.object[kind][component];
 
                 toml +
                 (
-                  if self.config_.enable_descriptions
+                  if self.object.toml.enable_descriptions
                   then
                     self.assets.description +
                     if std.length(obj.description) == 0 then ''
@@ -61,7 +70,7 @@
                 ) +
                 fmt.table([kind, component], obj) +
                 '\n',
-              std.objectFields(self.config_[kind]),
+              std.objectFields(self.object[kind]),
               ''
             )
           ),
@@ -135,7 +144,7 @@
       key(k): if std.length(std.findSubstr('.', k)) > 0 then std.escapeStringJson(k) else k,
       value(v, indent=0):
         if std.isString(v) then
-          if !($.config_.toml.enable_multilines) then std.escapeStringJson(v)
+          if !($.object.toml.enable_multilines) then std.escapeStringJson(v)
           else
             local lines = std.split(v, '\n');
 

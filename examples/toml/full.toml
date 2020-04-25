@@ -44,6 +44,25 @@ data_dir = "/var/lib/vector"
 # Transforms parse, structure, and enrich events.
 
 # ------------------------------------------------------------------------------
+# This is only for multiline string purpose... This component do nothing
+[transforms.apache_lua]
+  inputs = [ ]
+  type = "lua"
+  version = "2"
+  [transforms.apache_lua.hooks]
+    process = """
+    function (event, emit)
+      -- event.log.field = \"value\" -- set value of a field
+      -- event.log.another_field = nil -- remove field
+      -- event.log.first, event.log.second = nil, event.log.first -- rename field
+    
+      -- Very important! Emit the processed event.
+      emit(event)
+    end
+    
+    """
+
+# ------------------------------------------------------------------------------
 # Structure and parse the data
 [transforms.apache_parser]
   inputs = ["apache_logs"]
@@ -108,8 +127,6 @@ data_dir = "/var/lib/vector"
 # 
 # AWS S3 is a good choice for this purpose.
 [sinks.s3_archives]
-  [sinks.s3_archives.batch]
-    max_size = 10000000
   bucket = "my-log-archives"
   compression = "gzip"
   encoding = "ndjson"
@@ -117,5 +134,7 @@ data_dir = "/var/lib/vector"
   key_prefix = "date=%Y-%m-%d"
   region = "us-east-1"
   type = "aws_s3"
+  [sinks.s3_archives.batch]
+    max_size = 10000000
 
 

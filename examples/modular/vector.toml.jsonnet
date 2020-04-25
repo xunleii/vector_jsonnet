@@ -10,12 +10,9 @@
     modules+:: {
       kubernetes+:: {
         vars+:: {
-          // vars for kubernetes.files.vector.libsonnet
-          ignore_older: 12 * 3600,  // ignore all files older than 12h
-          enable_metrics: true,
-
           // vars for kubernetes.vector.libsonnet
           include_only+: { namespaces: ['*'] },  // includes all namespaces (all but kube-system by default)
+          enable_metrics: true,
         },
       },
     },
@@ -25,7 +22,7 @@
 
       $.modules.kubernetes +
       $.vector
-      .global({ enable_intro: true, enable_headers: true, enable_descriptions: true })
+      .global({ toml+: { enable_intro: true, enable_headers: true, enable_descriptions: true } })
       .components({
         // Filter all ingress logs
         ingress_filter: $.vector.transforms.filter({
