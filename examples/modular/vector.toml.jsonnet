@@ -1,13 +1,21 @@
 (
   (import '../../vector.libsonnet') +  // this import is required in order to use the imported modules
+
+  // NOTE: Theses two modules can be switched without any needed modification in this file,
+  //       thanks to the module fields vars & out
+  // (import 'modules/kubernetes.files.vector.libsonnet') +
   (import 'modules/kubernetes.vector.libsonnet') +
   {
     // configure imported modules
     modules+:: {
       kubernetes+:: {
         vars+:: {
+          // vars for kubernetes.files.vector.libsonnet
           ignore_older: 12 * 3600,  // ignore all files older than 12h
           enable_metrics: true,
+
+          // vars for kubernetes.vector.libsonnet
+          include_only+: { namespaces: ['*'] },  // includes all namespaces (all but kube-system by default)
         },
       },
     },
@@ -47,8 +55,9 @@
 
           labels: {
             instance: '${VECTOR_POD_NAME}',  // https://vector.dev/docs/reference/sinks/loki/#decentralized-deployments
-            namespace: '{{namespace}}',
-            pod_name: '{{pod_name}}',
+            node: '{{kubernetes.node_name}}',
+            namespace: '{{kubernetes.namespace}}',
+            pod_name: '{{kubernetes.name}}',
             container_name: '{{container_name}}',
             stream: '{{stream}}',
           },

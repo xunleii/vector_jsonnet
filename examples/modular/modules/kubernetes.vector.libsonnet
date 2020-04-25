@@ -1,5 +1,12 @@
-// This Vector module ingests Kubernetes logs, extracts some metadata like pod or
-// container name and generates metrics about the number of ingested events.
+// This Vector module ingests Kubernetes logs, enrich them with some Kubernetes contexts
+// and generates metrics about the number of ingested events.
+//
+// NOTE(25/04/2020): This module only exists for demonstration/testing purposes;
+//                   currently, the source 'kubernetes' and the tranform
+//                   'kubernetes_pod_metadata' are out of documentation (see
+//                   https://github.com/timberio/vector/pull/2222), so I
+//                   don't recommend to use it until theses two component
+//                   are "officially" available.
 //
 // maintainer: Alexandre NICOLAIE <github.com/xunleii>
 
@@ -12,7 +19,7 @@
         // in and out objects are used to known the endpoints of the current module.
         'in':: {},
         out:: {
-          events: 'kubernetes_event_metadata',
+          events: 'kubernetes_pod_metadata',
           stdout: 'kubernetes_stream.stdout',
           stderr: 'kubernetes_stream.stderr',
           metrics: 'kubernetes_logs_metrics',
@@ -21,21 +28,13 @@
         // vars can be used to easily overwrite some values
         // in this modules
         vars:: {
-          // ignore logs older than 1 day
-          ignore_older: 86400,
-
-          // enable the event field 'node' on each events, but
-          // require the environment variable VECTOR_NODE_NAME
-          enable_node_field: true,
+          include_only: {
+            namespaces: [],
+            containers: [],
+          },
 
           // enable to generates some metrics about log ingestion
           enable_metrics: false,
-
-          // defines grok patterns used to extracts metadata from file name and event message
-          grok_patterns: {
-            filename: '/var/log/pods/%{DATA:namespace}_%{DATA:pod_name}_%{DATA:pod_uid}/%{DATA:container_name}/%{GREEDYDATA}',
-            event: '%{TIMESTAMP_ISO8601:timestamp} (?<stream>stderr|stdout) F %{GREEDYDATA:message}',
-          },
         },
       } +
 
@@ -53,56 +52,29 @@
       })
       .components({
         // Fetch all pods logs from the host logs.
-        kubernetes_ingest: $.vector.sources.file({
+        // NOTE: because the source 'kubernetes' is not in the
+        //       config/vector.spec.toml file, we need to "import"
+        //       it manually.
+        kubernetes_ingest: $.vector.sources.fn('kubernetes', {
           description:: |||
-            Fetch all pods logs from the host /var/lib/pods directory.
+            Fetch all Kubernetes pods logs and enrich them with useful 
+            Kubernetes context.
           |||,
 
-          include: ['/var/log/pods/*/*/*.log'],
-          ignore_older: kubernetes.vars.ignore_older,
-          oldest_first: true,  // force Vector to read older logs before newest
-
-          fingerprinting: {
-            strategy: 'checksum',
-            ignored_header_bytes: 44,  // ignore the first common pattern on kubernetes logs (TIMESTAMP STREAM F)
-            fingerprint_bytes: 256,
-          },
+          include_namespaces: kubernetes.vars.include_only.namespaces,
+          include_container_names: kubernetes.vars.include_only.containers,
         }),
 
-        // Add the Kubernetes node field on each event.
-        [if kubernetes.vars.enable_node_field then 'kubernetes_add_node']:
-          $.vector.transforms.add_fields({
-            description:: |||
-              Add the field 'node' to the event, based on the environment 
-              variable VECTOR_NODE_NAME.
-            |||,
-
-            fields: { node: '${VECTOR_NODE_NAME}' },
-          }),
-
-        // Extract POD and CONTAINER fields from the file name
-        kubernetes_pod_metadata: $.vector.transforms.grok_parser({
+        // Enrich Kubernetes logs with Pods metadata.
+        // NOTE: because the transform 'kubernetes_pod_metadata' is not
+        //       in the config/vector.spec.toml file, we need to "import"
+        //       it manually.
+        kubernetes_pod_metadata: $.vector.transforms.fn('kubernetes_pod_metadata', {
           description: |||
-            Extract 'namespace', 'pod_name', 'pod_uid' and 'container_name'
-            fields from the event's file name.
+            Enrich Kubernetes logs with Pods metadata (annotations, labels, ...).
           |||,
 
-          field: 'file',
-          pattern: kubernetes.vars.grok_patterns.filename,
-        }),
-
-        // Parse kubernetes event and extract EVENT metadata (timestamp, stream and message)
-        kubernetes_event_metadata: $.vector.transforms.grok_parser({
-          description: |||
-            Extract 'timestamp', 'stream' and 'message' from the kubernetes 
-            event.
-          |||,
-
-          field: 'message',
-          pattern: kubernetes.vars.grok_patterns.event,
-          types: {
-            timestamp: 'timestamp|%+',
-          },
+          fields: ['name', 'namespace', 'labels', 'annotations', 'node_name'],
         }),
 
         // Creates swimlanes based on the event stream
@@ -130,8 +102,9 @@
                 field: 'message',
                 name: 'kubernetes_logs_ingested_total',
                 tags: {
-                  [if kubernetes.vars.enable_node_field then 'node']: '{{node}}',
-                  pod_name: '{{pod_name}}',
+                  node: '{{kubernetes.node_name}}',
+                  namespace: '{{kubernetes.namespace}}',
+                  pod_name: '{{kubernetes.name}}',
                   container_name: '{{container_name}}',
                   stream: '{{stream}}',
                 },
@@ -140,17 +113,11 @@
           }),
       })
       .pipelines([
-        if kubernetes.vars.enable_node_field
-        then ['kubernetes_ingest', 'kubernetes_add_node', 'kubernetes_pod_metadata', 'kubernetes_event_metadata']
-        else ['kubernetes_ingest', 'kubernetes_pod_metadata', 'kubernetes_event_metadata'],
-
-        // Since 'kubernetes_event_metadata' pipeline has already been generated, we
-        // can start a new pipeline directly on this component
-        ['kubernetes_event_metadata', 'kubernetes_stream.stdout'],
-        ['kubernetes_event_metadata', 'kubernetes_stream.stderr'],
+        ['kubernetes_ingest', 'kubernetes_pod_metadata', 'kubernetes_stream.stdout'],
+        ['kubernetes_ingest', 'kubernetes_pod_metadata', 'kubernetes_stream.stderr'],
 
         if kubernetes.vars.enable_metrics
-        then ['kubernetes_event_metadata', 'kubernetes_logs_metrics'],
+        then ['kubernetes_ingest', 'kubernetes_pod_metadata', 'kubernetes_logs_metrics'],
       ]),
   },
 }
