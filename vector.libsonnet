@@ -70,8 +70,10 @@
                         [kind]+: {
                           [component]+: {
                             [
+                            // avoid cycle on the same component
+                            if component == input then null
                             // avoid duplication on the inputs field
-                            if std.length(std.find(input, config[kind][component].inputs)) > 0 then null
+                            else if std.length(std.find(input, config[kind][component].inputs)) > 0 then null
                             else 'inputs'
                             ]+: [input],
                           },
