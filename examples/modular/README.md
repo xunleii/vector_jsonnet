@@ -22,15 +22,9 @@ A module must be defined like that:
   // all imported modules are merged in this object, don't forget the '+'
   modules+:: {
     <module_name>: {
-      // input component name
-      'in':: {
-        a: 'module_name_a',
-      },
-      // output component name
-      out:: {
-        b: 'module_name_b',
-      },
-      // module variables
+      // input/output components used to easily import this module on our pipelines
+      use: { [input_component]: output_component  }
+        // module variables
       vars:: {
         c: false
       } +

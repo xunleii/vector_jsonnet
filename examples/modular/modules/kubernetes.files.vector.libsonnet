@@ -15,10 +15,9 @@
       local kubernetes = $.modules.kubernetes;
 
       {
-        // in and out objects are used to known the endpoints of the current module.
-        'in':: {},
-        out:: {
-          events: 'kubernetes_event_metadata',
+        // input/output components used to easily import this module on our pipelines
+        use: {
+          events: 'kubernetes_pod_metadata',
           stdout: 'kubernetes_stream.stdout',
           stderr: 'kubernetes_stream.stderr',
           metrics: 'kubernetes_logs_metrics',

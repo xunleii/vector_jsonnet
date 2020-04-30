@@ -18,7 +18,7 @@
     },
 
     config::
-      local kubernetes = $.modules.kubernetes.out;
+      local kubernetes = $.modules.kubernetes.use;
 
       $.modules.kubernetes +
       $.vector
