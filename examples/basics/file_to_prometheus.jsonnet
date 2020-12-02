@@ -31,8 +31,8 @@ vector
   // Output data
   console_metrics: vector.sinks.console({ encoding: 'json' }),
   console_logs: vector.sinks.console({ encoding: 'text' }),
-  prometheus: vector.sinks.prometheus({
-    namespace: 'vector',
+  prometheus: vector.sinks.prometheus_exporter({
+    default_namespace: 'vector',
     buckets: [0.0, 10.0, 100.0, 1000.0, 10000.0, 100001.0],
   }),
 })
