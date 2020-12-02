@@ -6,7 +6,7 @@
 [![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)](#contributing)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-***vector_jsonnet*** *provides an alternative way of writing your TOML Vector configurations.*  
+***vector_jsonnet*** *provides an alternative way of writing your TOML Vector configurations.*
 *Instead, you write list of component and link them through simple pipelines. This enables you to write reusable Vector components
 and pipelines that you can reuse or share. It can also be integrated with tools likes [tanka](tanka.dev) in order to deploy vector
 instances on Kubernetes, with their TOML configuration, without writing a single TOML file.*
@@ -19,7 +19,7 @@ instances on Kubernetes, with their TOML configuration, without writing a single
 
 #### Mac OS X
 
-If you do not have Homebrew installed, [install it now](https://brew.sh/).  
+If you do not have Homebrew installed, [install it now](https://brew.sh/).
 Then run:  `brew install jsonnet`
 
 #### Linux
@@ -33,7 +33,7 @@ There is two way to install this library :
 
 #### From git
 
-Fork or clone this repository, using a command such as:  
+Fork or clone this repository, using a command such as:
 `git clone github.com/xunleii/vector_jsonnet`
 
 #### With [jsonnet-bundler](github.com/jsonnet-bundler/jsonnet-bundler) (recommended)
@@ -126,7 +126,7 @@ vector.global({ /* see global settings example */ })
   // Ingest data by t
 ## License
 
-[Apache 2.0]ailing one or more files
+  // Tailing one or more files
   apache_logs: vector.sources.file({
     include: ['/var/log/apache2/*.log'],  // supports globbing
     ignore_older: 86400,  // 1 day
@@ -177,7 +177,7 @@ the Vector component name).
 You can see a full example of a pipeline in the [configuration section](https://vector.dev/docs/setup/configuration/).
 
 A pipeline is, in this library, just a list of the components name defines in the [component section](#components-vectorcomponents).
-This describe the *flow* of your events; it generally start with a `source` and end with a `sink`.  
+This describe the *flow* of your events; it generally start with a `source` and end with a `sink`.
 As a picture often speaks better than words, here an example how to define pipelines (using component defined above).
 
 **Example:**
@@ -193,7 +193,7 @@ vector.global({ /* see global settings example */ })
 ])
 ```
 
-> **WARN:** be careful when you define several pipelines with the same component; if you change something in the order of the 
+> **WARN:** be careful when you define several pipelines with the same component; if you change something in the order of the
 > component, all pipelines are also changed
 >
 > ```jsonnet
@@ -230,7 +230,7 @@ The JSON output is mainly use for testing and debugging purpose, and must not be
 
 #### TOML *(CONFIG.toml)*
 
-The TOML output returns a string representing the full TOML configuration file.  
+The TOML output returns a string representing the full TOML configuration file.
 The "verbosity" can be configured inside the global settings, through the *hidden* object `toml` :
 
 - `enable_intro: true` adds the [introduction part](https://github.com/xunleii/vector_jsonnet/blob/master/vector.out.toml.libsonnet#L79)
@@ -244,7 +244,7 @@ to your vector object.
 used to increase TOML readability for the [LUA component](https://vector.dev/docs/reference/transforms/lua/). But, because the multi-lines
 feature implementation is heavy, it is disabled by default.
 
-Examples about theses settings are available in `examples/toml` ;  
+Examples about theses settings are available in `examples/toml` ;
 
 - `jsonnet -S examples/toml/full.jsonnet` to see TOML with all settings enabled
 - `jsonnet -S examples/toml/mini.jsonnet` to see same vector configuration, with all settings disabled
