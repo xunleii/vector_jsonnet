@@ -4,31 +4,43 @@
 #
 # SUMMARY
 #
-#   Generate vector.toml file from JSONNET example and inject them into 
+#   Generate vector.toml file from JSONNET example and inject them into
 #   a vector container.
 
 set -e
 
 if [ -z "$1" ]; then
-  echo "usage: $0 <example_file.toml>"
+  echo "usage: $0 <example_file.jsonnet>..."
   exit 1
 fi
 
 command -v jsonnet >/dev/null 2>&1 || { echo >&2 "jsonnet is required (https://github.com/google/jsonnet)... Aborting."; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo >&2 "docker is required (https://docs.docker.com/get-docker/)... Aborting."; exit 1; }
 
-VECTOR_TOML=$(mktemp)
+VECTOR_CONFIG_PATH=$(mktemp -d)
 
-pushd $(dirname $1) > /dev/null
-  sed -e 's|^\.json$|.toml|' $(basename $1) | jsonnet -S - > ${VECTOR_TOML} || (echo "$1 is unvalid... need to fixit"; exit 1)
-popd > /dev/null
+# compile given jsonnet files
+echo "Compile JSONNET entry files"
+for jsonnet_file in "$@"; do
+  toml_file="${VECTOR_CONFIG_PATH}/$(basename "${jsonnet_file//.jsonnet/.toml}")"
+  json_file="${VECTOR_CONFIG_PATH}/$(basename "${jsonnet_file//.jsonnet/.json}")"
 
-docker run -v ${VECTOR_TOML}:/etc/vector/vector.toml:ro timberio/vector:latest-alpine validate 
+  echo "- Compile ${jsonnet_file}"
 
-status=$?
-if test $status -eq 0
-  then echo "$1 is valid"
-  else echo "$1 is unvalid... need to fixit"
-fi
+  pushd "$(dirname "$jsonnet_file")" > /dev/null
+    jsonnet "$(basename "$jsonnet_file")" > "${json_file}" || (echo "${jsonnet_file} is unvalid... need to fixit"; exit 1)
+    sed -e 's|^\.json$|.toml|' "$(basename "${jsonnet_file}")" | jsonnet -S - > "${toml_file}" || (echo "${jsonnet_file} is unvalid... need to fixit"; exit 1)
+  popd > /dev/null
+done
 
-exit $status
+echo
+echo "Validate compiled settings"
+# validate each files
+for config_file in "${VECTOR_CONFIG_PATH}"/*; do
+  echo "- Validate ${config_file}"
+  docker run -v "${config_file}:/tmp/$(basename "${config_file}"):ro" timberio/vector:latest-alpine validate --no-environment --deny-warnings "/tmp/$(basename "${config_file}")"
+  echo
+
+  status=$?
+  if [ $status -ne 0 ]; then exit $status; fi
+done

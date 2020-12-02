@@ -4,7 +4,7 @@
 #
 # SUMMARY
 #
-#   Converts TOML file in JSON and compares it with the result of the 
+#   Converts TOML file in JSON and compares it with the result of the
 #   equivalent JSONNET file.
 
 set -e
@@ -24,9 +24,9 @@ TOML_FILE="$1"
 JSONNET_FILE="${1%.toml}.jsonnet"
 
 JSON_A="$(mktemp)"
-cat "${TOML_FILE}" | yj -tj | jq '.' > "${JSON_A}" 
+cat "${TOML_FILE}" | yj -tj | jq -S '.' > "${JSON_A}"
 
 JSON_B="$(mktemp)"
-jsonnet "${JSONNET_FILE}" | jq '.' > "${JSON_B}"
+jsonnet "${JSONNET_FILE}" | jq -S '.' > "${JSON_B}"
 
 ${DIFFTOOLS} -u "${JSON_A}" "${JSON_B}"
