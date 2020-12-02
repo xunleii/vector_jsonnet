@@ -1,78 +1,95 @@
 {
-  // Transforms parse, structure, and enrich events.
   transforms:: {
     fn(type, o):: { kind:: 'transforms', type: type } + o,
-    
-    // Accepts and outputs `log` events, allowing you to add one or more log fields.
+
+    // The Vector add_fields transform shapes logs
     add_fields(o={}):: self.fn('add_fields', o),
 
-    // Accepts and outputs `metric` events, allowing you to add one or more metric tags.
+    // The Vector add_tags transform shapes metrics
     add_tags(o={}):: self.fn('add_tags', o),
 
-    // Accepts and outputs `log` events, allowing you to strips ANSI escape sequences from the specified field.
+    // The Vector ansi_stripper transform sanitizes logs
     ansi_stripper(o={}):: self.fn('ansi_stripper', o),
 
-    // Accepts and outputs `log` events, allowing you to enrich logs with AWS EC2 instance metadata.
+    // AWS CloudWatch Logs Subscription events allow you to forward AWS CloudWatch Logs to external systems. Through the subscriiption, you can: call a Lambda, send to AWS Kinesis, or send to AWS Kinesis Firehose (which can then be forwarded to many destinations).
+    aws_cloudwatch_logs_subscription_parser(o={}):: self.fn('aws_cloudwatch_logs_subscription_parser', o),
+
+    // The Vector aws_ec2_metadata transform enriches logs from AWS EC2 instance metadata.
     aws_ec2_metadata(o={}):: self.fn('aws_ec2_metadata', o),
 
-    // Accepts and outputs `log` events, allowing you to coerce log fields into fixed types.
+    // The Vector coercer transform shapes logs
     coercer(o={}):: self.fn('coercer', o),
 
-    // Accepts and outputs `log` events, allowing you to concat (substrings) of other fields to a new one.
+    // The Vector concat transform shapes logs
     concat(o={}):: self.fn('concat', o),
 
-    // Accepts and outputs `log` events, allowing you to prevent duplicate Events from being outputted by using an LRU cache.
+    // The Vector dedupe transform filters logs
     dedupe(o={}):: self.fn('dedupe', o),
 
-    // Accepts and outputs `log` and `metric` events, allowing you to select events based on a set of logical conditions.
+    // The Vector filter transform filters logs
     filter(o={}):: self.fn('filter', o),
 
-    // Accepts and outputs `log` events, allowing you to enrich events with geolocation data from the MaxMind GeoIP2 and GeoLite2 city databases.
+    // The Vector geoip transform enriches logs from MaxMind GeoIP2 and GeoLite2 city databases.
     geoip(o={}):: self.fn('geoip', o),
 
-    // Accepts and outputs `log` events, allowing you to parse a log field value with Grok.
+    // The Vector grok_parser transform parses logs
     grok_parser(o={}):: self.fn('grok_parser', o),
 
-    // Accepts and outputs `log` events, allowing you to parse a log field value as JSON.
+    // The Vector json_parser transform parses logs
     json_parser(o={}):: self.fn('json_parser', o),
 
-    // Accepts `log` events, but outputs `metric` events, allowing you to convert logs into one or more metrics.
+    // The Vector key_value_parser transform parses logs
+    key_value_parser(o={}):: self.fn('key_value_parser', o),
+
+    // The Vector log_to_metric transform converts logs
     log_to_metric(o={}):: self.fn('log_to_metric', o),
 
-    // Accepts and outputs `log` events, allowing you to parse a log field's value in the logfmt format.
+    // The Vector logfmt_parser transform parses logs
     logfmt_parser(o={}):: self.fn('logfmt_parser', o),
 
-    // Accepts and outputs `log` and `metric` events, allowing you to transform events with a full embedded Lua engine.
+    // The Vector lua transform programs logs and metrics
     lua(o={}):: self.fn('lua', o),
 
-    // Accepts and outputs `log` events, allowing you to merge partial log events into a single event.
+    // The Vector merge transform reduces logs
     merge(o={}):: self.fn('merge', o),
 
-    // Accepts and outputs `log` events, allowing you to parse a log field's value with a Regular Expression.
+    // The Vector metric_to_log transform converts metrics
+    metric_to_log(o={}):: self.fn('metric_to_log', o),
+
+    // The Vector reduce transform reduces logs
+    reduce(o={}):: self.fn('reduce', o),
+
+    // The Vector regex_parser transform parses logs
     regex_parser(o={}):: self.fn('regex_parser', o),
 
-    // Accepts and outputs `log` events, allowing you to remove one or more log fields.
+    // The Vector remap transform programs logs
+    remap(o={}):: self.fn('remap', o),
+
+    // The Vector remove_fields transform shapes logs
     remove_fields(o={}):: self.fn('remove_fields', o),
 
-    // Accepts and outputs `metric` events, allowing you to remove one or more metric tags.
+    // The Vector remove_tags transform shapes metrics
     remove_tags(o={}):: self.fn('remove_tags', o),
 
-    // Accepts and outputs `log` events, allowing you to rename one or more log fields.
+    // The Vector rename_fields transform shapes logs
     rename_fields(o={}):: self.fn('rename_fields', o),
 
-    // Accepts and outputs `log` events, allowing you to sample events with a configurable rate.
+    // The Vector sampler transform filters logs
     sampler(o={}):: self.fn('sampler', o),
 
-    // Accepts and outputs `log` events, allowing you to split a field's value on a _literal_ separator and zip the tokens into ordered field names.
+    // The Vector split transform shapes logs
     split(o={}):: self.fn('split', o),
 
-    // Accepts and outputs `log` events, allowing you to route events across parallel streams using logical filters.
+    // The Vector swimlanes transform routes logs
     swimlanes(o={}):: self.fn('swimlanes', o),
 
-    // Accepts and outputs `metric` events, allowing you to limit the cardinality of metric tags to prevent downstream disruption of metrics services.
+    // The Vector tag_cardinality_limit transform filters metrics
     tag_cardinality_limit(o={}):: self.fn('tag_cardinality_limit', o),
 
-    // Accepts and outputs `log` events, allowing you to tokenize a field's value by splitting on white space, ignoring special wrapping characters, and zip the tokens into ordered field names.
+    // Tokenizes a field's value by splitting on white space, ignoring special wrapping characters, and zip the tokens into ordered field names.
     tokenizer(o={}):: self.fn('tokenizer', o),
+
+    // The Vector wasm transform programs logs
+    wasm(o={}):: self.fn('wasm', o),
   },
 }

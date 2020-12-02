@@ -63,7 +63,7 @@
         // Only archive ingress event on a durable long-term storage
         archives: $.vector.sinks.aws_s3({
           description:: |||
-            Archive only ingress events in order to use them to generate statistics or 
+            Archive only ingress events in order to use them to generate statistics or
             to be compliant with a regional law (for example).
           |||,
 
@@ -77,7 +77,7 @@
         }),
 
         // Send metrics event to Prometheus
-        prometheus: $.vector.sinks.prometheus({
+        prometheus: $.vector.sinks.prometheus_exporter({
           description:: |||
             Send all generated metric events to Prometheus.
           |||,
