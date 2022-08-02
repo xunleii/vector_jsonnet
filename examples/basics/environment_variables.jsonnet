@@ -19,11 +19,11 @@ vector
   }),
 
   // Add a field based on the value of the HOSTNAME env var
-  // Docs: https://vector.dev/docs/reference/transforms/add_fields
-  add_host: vector.transforms.add_fields({
-    fields: {
-      host: '${HOSTNAME}',
-    },
+  // Docs: https://vector.dev/docs/reference/transforms/remap
+  add_host: vector.transforms.remap({
+    source: |||
+      .host = get_env_var!("HOSTNAME")
+    |||,
   }),
 
   // Print the data to STDOUT for inspection

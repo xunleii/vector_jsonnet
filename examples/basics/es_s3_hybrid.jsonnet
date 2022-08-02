@@ -21,7 +21,7 @@ vector
 
   // Send structured data to Elasticsearch for searching of recent data
   es_cluster: vector.sinks.elasticsearch({
-    host: '79.12.221.222:9200',  // local or external host
+    endpoint: '79.12.221.222:9200',  // local or external host
     doc_type: '_doc',
   }),
 

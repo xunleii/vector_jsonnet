@@ -13,8 +13,11 @@ vector
   }),
 
   // Structure and parse the data
-  regex_parser: vector.transforms.regex_parser({
-    regex: @'^(?P<host>[\w\.]+) - (?P<user>[\w-]+) \[(?P<timestamp>.*)\] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$',
+  regex_parser: vector.transforms.remap({
+    drop_on_error: false,
+    source: |||
+      . |= parse_regex!(.message, r'^(?P<host>[\w\.]+) - (?P<user>[\w-]+) \[(?P<timestamp>.*)\] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$'),
+    |||,
   }),
 
   // Transform into metrics
