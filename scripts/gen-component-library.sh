@@ -15,15 +15,19 @@ if [ -z "$1" ]; then
 fi
 
 # list all components from vector documentation website
-VECTOR_COMPONENTS=$(curl -s "https://vector.dev/docs/reference/$1/" | htmlq '.vector-component')
+VECTOR_COMPONENTS=$(curl -s https://vector.dev/docs/reference/configuration/$1/ | htmlq 'div.grid>div>a')
 VECTOR_COMPONENT_JSONNET=""
 
-echo "[OK] $(wc -l <<<"${VECTOR_COMPONENTS}") '$1' components found"
+lines=$(wc -l <<<"${VECTOR_COMPONENTS}")
+num_components=$((lines / 2))
+
+echo "[OK] $num_components '$1' components found"
 
 # for each component badge, generate the wrapping
-while IFS= read -r component; do
-  component_name="$(htmlq '.vector-component' -a href <<<"${component}" | cut -d/ -f5)"
-  component_desc="$(htmlq '.vector-component' -a title <<<"${component}")"
+while IFS= read -r ignore; do
+  read -r component
+  component_name="$(htmlq 'span:last-child' -t <<<"${component}")"
+  component_desc="$(htmlq 'div:last-child' -t <<<"${component}")"
 
   echo -n "[  ] Fetch component ${component_name}"
 
