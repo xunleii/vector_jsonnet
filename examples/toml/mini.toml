@@ -13,14 +13,15 @@ data_dir = "/var/lib/vector"
     process = "function (event, emit)\n  -- event.log.field = \"value\" -- set value of a field\n  -- event.log.another_field = nil -- remove field\n  -- event.log.first, event.log.second = nil, event.log.first -- rename field\n\n  -- Very important! Emit the processed event.\n  emit(event)\nend\n"
 
 [transforms.apache_parser]
+  drop_on_error = false
   inputs = ["apache_logs"]
-  regex = "^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] \"(?P<method>[w]+) (?P<path>.*)\" (?P<status>[d]+) (?P<bytes_out>[d]+)$"
-  type = "regex_parser"
+  source = ". |= parse_regex!(.message, r'^(?P<host>[\\w.]+) - (?P<user>[\\w]+) (?P<bytes_in>[\\d]+) [(?P<timestamp>.*)] \"(?P<method>[\\w]+) (?P<path>.*)\" (?P<status>[\\d]+) (?P<bytes_out>[\\d]+)$'),\n"
+  type = "remap"
 
 [transforms.apache_sampler]
   inputs = ["apache_parser"]
   rate = 50
-  type = "sampler"
+  type = "sample"
 
 [transforms.log_to_metric]
   inputs = ["apache_parser"]
@@ -52,9 +53,9 @@ data_dir = "/var/lib/vector"
 
 [sinks.prometheus]
   buckets = [0, 10, 100, 1000, 10000, 100001]
+  default_namespace = "vector"
   inputs = ["log_to_metric"]
-  namespace = "vector"
-  type = "prometheus"
+  type = "prometheus_exporter"
 
 [sinks.s3_archives]
   bucket = "my-log-archives"
