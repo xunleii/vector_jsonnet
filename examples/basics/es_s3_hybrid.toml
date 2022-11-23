@@ -28,8 +28,10 @@ inputs = ["apache_logs"] # don't sample
 type = "aws_s3"
 region = "us-east-1"
 bucket = "my_log_archives"
-encoding = "ndjson"
 compression = "gzip"
+
+[sinks.s3_archives.encoding]
+codec = "json"
 
 [sinks.s3_archives.batch]
 max_size = 10000000 # 10mb uncompressed

@@ -60,12 +60,13 @@ data_dir = "/var/lib/vector"
 [sinks.s3_archives]
   bucket = "my-log-archives"
   compression = "gzip"
-  encoding = "ndjson"
   inputs = ["apache_parser"]
   key_prefix = "date=%Y-%m-%d"
   region = "us-east-1"
   type = "aws_s3"
   [sinks.s3_archives.batch]
     max_size = 10000000
+  [sinks.s3_archives.encoding]
+    codec = "json"
 
 

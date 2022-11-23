@@ -48,12 +48,16 @@ name = "bytes_out_histogram"
 [sinks.console_metrics]
 inputs = ["log_to_metric"]
 type = "console"
-encoding = "json"
+
+[sinks.console_metrics.encoding]
+codec = "json"
 
 [sinks.console_logs]
 inputs = ["regex_parser"]
 type = "console"
-encoding = "text"
+
+[sinks.console_logs.encoding]
+codec = "text"
 
 [sinks.prometheus]
 inputs = ["log_to_metric"]

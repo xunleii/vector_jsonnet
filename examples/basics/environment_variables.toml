@@ -27,4 +27,6 @@ source = ".host = get_env_var!(\"HOSTNAME\")\n"
 [sinks.out]
 inputs = ["add_host"]
 type = "console"
-encoding = "json"
+
+[sinks.out.encoding]
+codec = "json"

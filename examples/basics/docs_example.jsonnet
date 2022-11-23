@@ -36,7 +36,7 @@ vector
     bucket: 'my-log-archives',
     key_prefix: 'date=%Y-%m-%d',  // daily partitions, hive friendly format
     compression: 'gzip',  // compress final objects
-    encoding: 'ndjson',  // new line delimited JSON
+    encoding: { codec: 'json' },  // new line delimited JSON
     batch: {
       max_size: 10000000,  // 10mb uncompressed
     },

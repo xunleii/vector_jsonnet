@@ -9,7 +9,7 @@ local vector = (import '../../vector.libsonnet').vector;
 vector
 .components({
   'in': vector.sources.stdin(),
-  out: vector.sinks.console({ encoding: 'text' }),
+  out: vector.sinks.console({ encoding: { codec: 'text' } }),
 })
 .pipelines([['in', 'out']])
 .json

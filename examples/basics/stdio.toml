@@ -10,4 +10,6 @@ type = "stdin"
 [sinks.out]
 inputs = ["in"]
 type = "console"
-encoding = "text"
+
+[sinks.out.encoding]
+codec = "text"

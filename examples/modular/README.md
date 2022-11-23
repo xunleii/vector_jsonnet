@@ -1,12 +1,12 @@
 # Modularity
 
-*The goal of this library is to provide a way to easily share pre-made Vector pipelines.*
+_The goal of this library is to provide a way to easily share pre-made Vector pipelines._
 
 ## Module structure
 
 A module object contains 3 elements:
 
-- **in/out components**: theses are the component names of the input and output of the pipelines. 
+- **in/out components**: theses are the component names of the input and output of the pipelines.
 - **vars:** theses variables are used to easily edit the module pipeline, avoiding direct overwriting
 - **pipeline:** that is why the module exists
 
@@ -39,5 +39,5 @@ A module must be defined like that:
 }
 ```
 
-See the [kubernetes module](modules/kubernetes.vector.libsonnet) for an example of an "implementation" of a Vector module 
+See the [kubernetes module](modules/kubernetes.vector.libsonnet) for an example of an "implementation" of a Vector module
 and [vector.toml.jsonnet](vector.toml.jsonnet) to see to use a module.
