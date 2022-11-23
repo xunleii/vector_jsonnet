@@ -110,15 +110,15 @@
           },
         }),
 
-        // Creates swimlanes based on the event stream
-        kubernetes_stream: $.vector.transforms.swimlanes({
+        // Creates routes based on the event stream
+        kubernetes_stream: $.vector.transforms.route({
           description:: |||
-            Throw events into two lanes, based on their stream field (stdout or stderr).
+            Throw events into two routes, based on their stream field (stdout or stderr).
           |||,
 
-          lanes: {
-            stdout: { 'stream.eq': 'stdout' },
-            stderr: { 'stream.eq': 'stderr' },
+          route: {
+            stdout: '.stream == "stdout"',
+            stderr: '.stream == "stderr"',
           },
         }),
 

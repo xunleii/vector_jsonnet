@@ -9,7 +9,7 @@
       // Global options are relevant to Vector as a whole and apply to global behavior. Theses options also
       // configure the JSONNET generation behaviour.
       global(o)::
-        self + { object+: o + { index+: {} } },
+        self + { object+: o { index+: {} } },
 
       // Components allow you to collect, transform, and route data with ease.
       components(o)::
@@ -23,15 +23,15 @@
 
                 config {
                   // index maps all components with the 'kind' (sources, sinks, ...). This map is used during pipeline generation
-                  // in order to find the right objet in the right kind and update its 'inputs' field.
+                  // in order to find the right object in the right kind and update its 'inputs' field.
                   index+::
-                    // transforms.swimlanes are maneged differently because we need to index the lanes and not the component.
-                    if o[component].type == 'swimlanes'
+                    // transforms.route are maneged differently because we need to index the routes and not the component.
+                    if o[component].type == 'route'
                     then
-                      assert 'lanes' in o[component] : "lanes must be defined in swimlanes component '%s'" % component;
+                      assert 'route' in o[component] : "route object must be defined in route component '%s'" % component;
                       {
-                        [component + '.' + lane]: o[component].kind
-                        for lane in std.objectFields(o[component].lanes)
+                        [component + '.' + route]: o[component].kind
+                        for route in (std.objectFields(o[component].route) + ['_unmatched'])
                       }
                     else { [component]: o[component].kind },
 

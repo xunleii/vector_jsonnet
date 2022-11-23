@@ -10,19 +10,24 @@ vector
   }),
 
   // Structure and parse the data
-  apache_parser: vector.transforms.regex_parser({
-    regex: '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$',
+  apache_parser: vector.transforms.remap({
+    drop_on_error: false,
+    source: |||
+      . |= parse_regex!(.message, r'^(?P<host>[\w.]+) - (?P<user>[\w]+) (?P<bytes_in>[\d]+) [(?P<timestamp>.*)] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$'),
+    |||,
   }),
 
   // Sample the data to save on cost
-  apache_sampler: vector.transforms.sampler({
+  apache_sampler: vector.transforms.sample({
     rate: 50,  // only keep 50%
   }),
 
   // Send structured data to a short-term storage
   es_cluster: vector.sinks.elasticsearch({
-    host: 'http://79.12.221.222:9200',  // local or external host
-    index: 'vector-%Y-%m-%d',  // daily indices
+    endpoint: 'http://79.12.221.222:9200',  // local or external host
+    bulk: {
+      index: 'vector-%Y-%m-%d',  // daily indices
+    },
   }),
 
   // Send structured data to a cost-effective long-term storage

@@ -26,7 +26,7 @@ vector
       { type: 'histogram', field: 'bytes_out', name: 'bytes_out_histogram' },
     ],
   }),
-  apache_sampler: vector.transforms.sampler({
+  apache_sampler: vector.transforms.sample({
     rate: 50,  // only keep 50%
   }),
   apache_lua: vector.transforms.lua({
