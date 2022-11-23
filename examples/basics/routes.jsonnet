@@ -17,7 +17,7 @@ vector
   apache_parser: vector.transforms.remap({
     drop_on_error: false,
     source: |||
-      . |= parse_regex!(.message, r'^(?P<host>[\w.]+) - (?P<user>[\w]+) (?P<bytes_in>[\d]+) [(?P<timestamp>.*)] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$',
+      . |= parse_regex!(.message, r'^(?P<host>[\w.]+) - (?P<user>[\w]+) (?P<bytes_in>[\d]+) [(?P<timestamp>.*)] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$'),
     |||,
   }),
 
