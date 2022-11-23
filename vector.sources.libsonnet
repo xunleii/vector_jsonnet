@@ -2,6 +2,9 @@
   sources:: {
     fn(type, o):: { kind:: 'sources', type: type } + o,
 
+    // Collect events from AMQP 0.9.1 compatible brokers like RabbitMQ
+    amqp(o={}):: self.fn('amqp', o),
+
     // Collect metrics from Apache’s HTTPD server
     apache_metrics(o={}):: self.fn('apache_metrics', o),
 
@@ -38,6 +41,9 @@
     // Collect logs from files
     file(o={}):: self.fn('file', o),
 
+    // Collect logs from a file descriptor
+    file_descriptor(o={}):: self.fn('file_descriptor', o),
+
     // Collect logs from a Fluentd or Fluent Bit agent
     fluent(o={}):: self.fn('fluent', o),
 
@@ -50,8 +56,11 @@
     // Collect metric data from the local system
     host_metrics(o={}):: self.fn('host_metrics', o),
 
-    // Collect logs emitted by an HTTP server
-    http(o={}):: self.fn('http', o),
+    // Pull observability data from an HTTP server at a configured interval.
+    http_client(o={}):: self.fn('http_client', o),
+
+    // Receive logs emitted by an HTTP server.
+    http_server(o={}):: self.fn('http_server', o),
 
     // Expose all log and trace messages emitted by the running Vector instance
     internal_logs(o={}):: self.fn('internal_logs', o),
@@ -79,6 +88,9 @@
 
     // Collect metrics from NGINX
     nginx_metrics(o={}):: self.fn('nginx_metrics', o),
+
+    // Receive OTLP data through gRPC or HTTP.
+    opentelemetry(o={}):: self.fn('opentelemetry', o),
 
     // Collect metrics from the PostgreSQL database
     postgresql_metrics(o={}):: self.fn('postgresql_metrics', o),
