@@ -30,7 +30,7 @@ vector
     region: 'us-east-1',
     bucket: 'my_log_archives',
     compression: 'gzip',
-    encoding: 'ndjson',
+    encoding: { codec: 'json' },
     batch: {
       max_size: 10000000,  // 10mb uncompressed
     },

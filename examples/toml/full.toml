@@ -63,17 +63,20 @@ data_dir = "/var/lib/vector"
     """
 
 # ------------------------------------------------------------------------------
-# Structure and parse the data
 [transforms.apache_parser]
+  drop_on_error = false
   inputs = ["apache_logs"]
-  regex = "^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] \"(?P<method>[w]+) (?P<path>.*)\" (?P<status>[d]+) (?P<bytes_out>[d]+)$"
-  type = "regex_parser"
+  source = """
+  . |= parse_regex!(.message, r'^(?P<host>[\\w.]+) - (?P<user>[\\w]+) (?P<bytes_in>[\\d]+) [(?P<timestamp>.*)] \"(?P<method>[\\w]+) (?P<path>.*)\" (?P<status>[\\d]+) (?P<bytes_out>[\\d]+)$'),
+  
+  """
+  type = "remap"
 
 # ------------------------------------------------------------------------------
 [transforms.apache_sampler]
   inputs = ["apache_parser"]
   rate = 50
-  type = "sampler"
+  type = "sample"
 
 # ------------------------------------------------------------------------------
 # Extract somes metrics from the parsed logs
@@ -118,9 +121,9 @@ data_dir = "/var/lib/vector"
 # Send metrics to Prometheus
 [sinks.prometheus]
   buckets = [0, 10, 100, 1000, 10000, 100001]
+  default_namespace = "vector"
   inputs = ["log_to_metric"]
-  namespace = "vector"
-  type = "prometheus"
+  type = "prometheus_exporter"
 
 # ------------------------------------------------------------------------------
 # Send structured data to a cost-effective long-term storage.
@@ -129,12 +132,13 @@ data_dir = "/var/lib/vector"
 [sinks.s3_archives]
   bucket = "my-log-archives"
   compression = "gzip"
-  encoding = "ndjson"
   inputs = ["apache_parser"]
   key_prefix = "date=%Y-%m-%d"
   region = "us-east-1"
   type = "aws_s3"
   [sinks.s3_archives.batch]
     max_size = 10000000
+  [sinks.s3_archives.encoding]
+    codec = "json"
 
 

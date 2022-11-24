@@ -2,59 +2,69 @@
 # ------------------------------------------------------------------------------
 # A simple example that demonstrates the Vector's swimlane mechanism
 # with the Jsonnet Library.
-
 data_dir = "/var/lib/vector"
 
 # Ingest data by tailing one or more files
 [sources.apache_logs]
-  type         = "file"
-  include      = ["/var/log/apache2/*.log"]    # supports globbing
-  ignore_older = 86400                         # 1 day
+type = "file"
+include = ["/var/log/apache2/*.log"] # supports globbing
+ignore_older = 86400 # 1 day
 
 # Structure and parse the data
 [transforms.apache_parser]
-  inputs       = ["apache_logs"]
-  type         = "regex_parser"                # fast/powerful regex
-  regex        = '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$'
+inputs = ["apache_logs"]
+type = "remap"
+source = ". |= parse_regex!(.message, r'^(?P<host>[\\w.]+) - (?P<user>[\\w]+) (?P<bytes_in>[\\d]+) [(?P<timestamp>.*)] \"(?P<method>[\\w]+) (?P<path>.*)\" (?P<status>[\\d]+) (?P<bytes_out>[\\d]+)$'),\n"
+drop_on_error = false
 
 # Create one swimlane for each HTTP Status group
 [transforms.apache_status]
-  inputs       = ["apache_parser"]
-  type         = "swimlanes"
+inputs = ["apache_parser"]
+type = "route"
 
-  [transforms.apache_status.lanes.2xx]
-    "status.regex" = "2.."
-
-  [transforms.apache_status.lanes.3xx]
-    "status.regex" = "3.."
-
-  [transforms.apache_status.lanes.4xx]
-    "status.regex" = "4.."
-
-  [transforms.apache_status.lanes.5xx]
-    "status.regex" = "5.."
+[transforms.apache_status.route]
+"2xx" = "starts_with(.status, \"2\")"
+"3xx" = "starts_with(.status, \"3\")"
+"4xx" = "starts_with(.status, \"4\")"
+"5xx" = "starts_with(.status, \"5\")"
 
 # Sample the data to save on cost (only 2xx and 3xx)
 [transforms.sampler]
-  inputs       = ["apache_status.2xx", "apache_status.3xx"]
-  type         = "sampler"
-  rate         = 50                            # only keep 50%
+inputs = ["apache_status.2xx", "apache_status.3xx"]
+type = "sample"
+rate = 50 # only keep 50%
 
 # Send structured data to a short-term storage
 [sinks.es_cluster]
-  inputs       = ["sampler", "apache_status.4xx", "apache_status.5xx"] # take only sampled data or with error status
-  type         = "elasticsearch"
-  host         = "http://79.12.221.222:9200"   # local or external host
-  index        = "vector-%Y-%m-%d"             # daily indices
+inputs = [
+  "sampler",
+  "apache_status.4xx",
+  "apache_status.5xx"
+] # take only sampled data or with error status
+type = "elasticsearch"
+endpoint = "http://79.12.221.222:9200" # local or external host
+
+[sinks.es_cluster.bulk]
+index = "vector-%Y-%m-%d"
 
 # Send structured data to a cost-effective long-term storage
 [sinks.s3_archives]
-  inputs       = ["apache_status.2xx", "apache_status.4xx"] # don't archive sampled data, 3xx and 5xx hits
-  type         = "aws_s3"
-  region       = "us-east-1"
-  bucket       = "my-log-archives"
-  key_prefix   = "date=%Y-%m-%d"               # daily partitions, hive friendly format
-  compression  = "gzip"                        # compress final objects
-  encoding     = "ndjson"                      # new line delimited JSON
-  [sinks.s3_archives.batch]
-    max_size   = 10000000                      # 10mb uncompressed
+inputs = [
+  "apache_status.2xx",
+  "apache_status.4xx"
+] # don't archive sampled data, 3xx and 5xx hits
+type = "aws_s3"
+region = "us-east-1"
+bucket = "my-log-archives"
+key_prefix = "date=%Y-%m-%d" # daily partitions, hive friendly format
+compression = "gzip" # compress final objects
+
+[sinks.s3_archives.encoding]
+codec = "json"
+
+[sinks.s3_archives.batch]
+max_size = 10000000 # 10mb uncompressed
+
+[sinks.devnull]
+inputs = ["apache_status._unmatched"]
+type = "blackhole"

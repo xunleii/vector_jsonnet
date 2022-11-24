@@ -2,6 +2,12 @@
   sinks:: {
     fn(type, o):: { kind:: 'sinks', type: type } + o,
 
+    // Send events to AMQP 0.9.1 compatible brokers like RabbitMQ
+    amqp(o={}):: self.fn('amqp', o),
+
+    // Deliver log events to Apex
+    apex(o={}):: self.fn('apex', o),
+
     // Publish log events to AWS Cloudwatch Logs
     aws_cloudwatch_logs(o={}):: self.fn('aws_cloudwatch_logs', o),
 
@@ -19,6 +25,9 @@
 
     // Publish observability events to Simple Queue Service topics
     aws_sqs(o={}):: self.fn('aws_sqs', o),
+
+    // Deliver log events to Axiom
+    axiom(o={}):: self.fn('axiom', o),
 
     // Store your observability data in Azure Blob Storage
     azure_blob(o={}):: self.fn('azure_blob', o),
@@ -52,6 +61,9 @@
 
     // Output observability events into files
     file(o={}):: self.fn('file', o),
+
+    // Store unstructured log events in Google Chronicle
+    gcp_chronicle_unstructured(o={}):: self.fn('gcp_chronicle_unstructured', o),
 
     // Deliver metrics to GCP’s Cloud Monitoring system
     gcp_stackdriver_metrics(o={}):: self.fn('gcp_stackdriver_metrics', o),

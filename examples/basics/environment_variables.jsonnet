@@ -29,7 +29,7 @@ vector
   // Print the data to STDOUT for inspection
   // Docs: https://vector.dev/docs/reference/sinks/console
   out: vector.sinks.console({
-    encoding: 'json',
+    encoding: { codec: 'json' },
   }),
 })
 .pipelines([

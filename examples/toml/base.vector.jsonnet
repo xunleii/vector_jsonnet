@@ -10,10 +10,11 @@ vector
     ignore_older: 86400,  // 1 day
   }),
 
-  apache_parser: vector.transforms.regex_parser({
-    description:: 'Structure and parse the data',
-
-    regex: '^(?P<host>[w.]+) - (?P<user>[w]+) (?P<bytes_in>[d]+) [(?P<timestamp>.*)] "(?P<method>[w]+) (?P<path>.*)" (?P<status>[d]+) (?P<bytes_out>[d]+)$',
+  apache_parser: vector.transforms.remap({
+    drop_on_error: false,
+    source: |||
+      . |= parse_regex!(.message, r'^(?P<host>[\w.]+) - (?P<user>[\w]+) (?P<bytes_in>[\d]+) [(?P<timestamp>.*)] "(?P<method>[\w]+) (?P<path>.*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+)$'),
+    |||,
   }),
   log_to_metric: vector.transforms.log_to_metric({
     description:: 'Extract somes metrics from the parsed logs',
@@ -65,15 +66,15 @@ vector
     bucket: 'my-log-archives',
     key_prefix: 'date=%Y-%m-%d',  // daily partitions, hive friendly format
     compression: 'gzip',  // compress final objects
-    encoding: 'ndjson',  // new line delimited JSON
+    encoding: { codec: 'json' },  // new line delimited JSON
     batch: {
       max_size: 10000000,  // 10mb uncompressed
     },
   }),
-  prometheus: vector.sinks.prometheus({
+  prometheus: vector.sinks.prometheus_exporter({
     description:: 'Send metrics to Prometheus',
 
-    namespace: 'vector',
+    default_namespace: 'vector',
     buckets: [0.0, 10.0, 100.0, 1000.0, 10000.0, 100001.0],
   }),
 })

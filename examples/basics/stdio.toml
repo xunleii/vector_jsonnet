@@ -4,11 +4,12 @@
 # guide:
 #
 # https://vector.dev/guides/getting-started
-
 [sources.in]
-    type = "stdin"
+type = "stdin"
 
 [sinks.out]
-    inputs = ["in"]
-    type = "console"
-    encoding = "text"
+inputs = ["in"]
+type = "console"
+
+[sinks.out.encoding]
+codec = "text"
