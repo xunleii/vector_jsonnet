@@ -1,0 +1,56 @@
+name: Jsonnet Linter
+
+on: 
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  jsonnet-lint:
+    name: Lint Jsonnet code base
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Jsonnet
+        uses: zendesk/setup-jsonnet@v5
+        with:
+          version: v0.15.0
+
+      # # TODO: remove theses lines; for act desting only
+      # - run: apt update && apt install -y git
+
+      - name: Format all JSONNET files
+        run: find . -name '*\.*sonnet' | xargs jsonnetfmt -i
+      - name: Generate diff
+        run: |-
+          JSONNET_DIFF=$(git diff)
+
+          echo "JSONNET_DIFF<<EOF" >> $GITHUB_ENV
+          echo "${JSONNET_DIFF}" >> $GITHUB_ENV       
+          echo "EOF" >> $GITHUB_ENV
+
+          echo "JSONNET_HAS_DIFF=$(test "${JSONNET_DIFF}" != "")"
+
+      - name: Comment the PR on diff
+        uses: unsplash/comment-on-pr@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          msg: |-
+            Unformated JSONNET file found
+
+            ```diff
+            {{ env.JSONNET_DIFF }}
+            ```
+          check_for_duplicate_msg: true  # OPTIONAL 
+        if: env.JSONNET_HAS_DIFF
+      - name: Fail on diff
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Some JSONNET files are not formatted correctly')
+        if: env.JSONNET_HAS_DIFF
+        
